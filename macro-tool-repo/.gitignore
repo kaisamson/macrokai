@@ -1,0 +1,9 @@
+# Build output
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+
+# Recordings people make locally shouldn't be committed
+macros/
