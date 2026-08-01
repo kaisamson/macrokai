@@ -4,12 +4,21 @@ A tiny, minimal desktop app for recording and replaying mouse/keyboard input.
 
 ## Download (Windows)
 
-Grab the latest `MacroKai.exe` from the **[Releases](../../releases)** page —
-no install, no Python needed. Just download and double-click.
+Grab the latest `MacroKai-windows.zip` from the **[Releases](../../releases)**
+page, unzip it anywhere, and run `MacroKai.exe` inside the extracted folder.
+No install, no Python needed.
 
-> **Note:** Windows SmartScreen or your antivirus may flag the exe the first
-> time, since it's an unsigned PyInstaller build. Click "More info" → "Run
-> anyway" if you trust the source. This is normal for small unsigned tools.
+> **Note:** Windows SmartScreen or your antivirus may still flag it, since
+> it's an unsigned build that does global keyboard/mouse hooks and injects
+> synthetic clicks — the same behavior pattern as a keylogger, which is
+> exactly what heuristic AV engines are watching for, even though this is
+> just an automation tool. Click "More info" → "Run anyway" if you trust the
+> source. The build already avoids the biggest false-positive triggers
+> (a self-extracting `--onefile` bundle and UPX compression), but the only
+> way to eliminate this entirely is to sign the exe with a paid code-signing
+> certificate — not something this project does. If it gets flagged, you can
+> submit it to Microsoft as a false positive:
+> https://www.microsoft.com/en-us/wdsi/filesubmission
 
 ## Using it
 
@@ -48,30 +57,30 @@ pip install -r requirements.txt
 python macro_tool.py
 ```
 
-## Building the .exe yourself
+## Building it yourself
 
 **Automatically (recommended):** this repo has a GitHub Actions workflow
-(`.github/workflows/build.yml`) that builds `MacroKai.exe` on a Windows
-runner. To cut a release:
+(`.github/workflows/build.yml`) that builds MacroKai on a Windows runner.
+To cut a release:
 
 ```
 git tag v1.0.0
 git push --tags
 ```
 
-That triggers the workflow, builds the exe, and publishes it to a new
-GitHub Release automatically. You can also run the workflow manually from
-the **Actions** tab (it'll just leave you a downloadable build artifact
-instead of a release).
+That triggers the workflow, builds it, zips it up, and publishes it to a
+new GitHub Release automatically. You can also run the workflow manually
+from the **Actions** tab (it'll just leave you a downloadable build
+artifact instead of a release).
 
 **Locally on Windows:** run `build.bat`, or manually:
 
 ```
 pip install -r requirements.txt pyinstaller
-pyinstaller --onefile --noconsole --name MacroKai macro_tool.py
+pyinstaller --onedir --noupx --noconsole --name MacroKai --version-file version_info.txt macro_tool.py
 ```
 
-The exe will be in `dist\MacroKai.exe`.
+The app will be in `dist\MacroKai\MacroKai.exe`.
 
 ## Platform notes
 
