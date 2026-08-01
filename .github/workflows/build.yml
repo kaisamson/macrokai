@@ -29,19 +29,19 @@ jobs:
         run: |
           pip install pynput pyinstaller
 
-      - name: Build MacroTool.exe
+      - name: Build MacroKai.exe
         run: |
-          pyinstaller --onefile --noconsole --name MacroTool macro_tool.py
+          pyinstaller --onefile --noconsole --name MacroKai macro_tool.py
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacroTool-windows
-          path: dist/MacroTool.exe
+          name: MacroKai-windows
+          path: dist/MacroKai.exe
 
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/MacroTool.exe
+          files: dist/MacroKai.exe
           generate_release_notes: true

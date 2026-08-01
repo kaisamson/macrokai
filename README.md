@@ -1,10 +1,10 @@
-# Macro Tool
+# MacroKai
 
 A tiny, minimal desktop app for recording and replaying mouse/keyboard input.
 
 ## Download (Windows)
 
-Grab the latest `MacroTool.exe` from the **[Releases](../../releases)** page —
+Grab the latest `MacroKai.exe` from the **[Releases](../../releases)** page —
 no install, no Python needed. Just download and double-click.
 
 > **Note:** Windows SmartScreen or your antivirus may flag the exe the first
@@ -15,13 +15,27 @@ no install, no Python needed. Just download and double-click.
 
 | Action | Hotkey | Button |
 |---|---|---|
-| Start recording | **F9** | "Record" |
-| Stop recording (prompts you to name & save it) | **F10** | "Stop && Save" |
-| Play the macro selected in the dropdown | **F11** | "Play" |
-| Stop playback | **F12** | "Stop" |
+| Play / Stop the macro selected in the dropdown (toggle) | **F1** | "Play" / "Stop" |
+| Record / Stop && Save (toggle; stopping prompts you to name & save it) | **F2** | "Record" / "Stop && Save" |
+| Start / Stop auto-clicking (toggle) | **F3** | "Start Auto Click" / "Stop Auto Click" |
 
 - The hotkeys are **global** — they work even if the app window isn't
   focused, so you can record/replay actions in any other program.
+- Each hotkey/button above **toggles** — pressing it again while that
+  action is running stops it. Starting one action (record, play, auto
+  click) automatically stops whichever of the others is running.
+- While recording, a running clock shows elapsed time. While playing, a
+  clock shows your position within the recording (`current / total`).
+  While auto-clicking, it shows elapsed time and the click count.
+- Playback **loops continuously** until you stop it: after each pass, the
+  mouse is moved back to the position it was in when playback started,
+  then the macro runs again.
+- If you pause before hitting stop while recording, that trailing wait is
+  preserved and replayed too (not just the time between your last two
+  actions).
+- The **Auto Click** section lets you set a click speed (in clicks per
+  second) and then start/stop clicking at the current mouse position with
+  F3 or its button.
 - Recordings are saved as `.json` files in a `macros` folder created next to
   the exe (or script).
 - The dropdown at the top always reflects what's in that folder.
@@ -37,7 +51,7 @@ python macro_tool.py
 ## Building the .exe yourself
 
 **Automatically (recommended):** this repo has a GitHub Actions workflow
-(`.github/workflows/build.yml`) that builds `MacroTool.exe` on a Windows
+(`.github/workflows/build.yml`) that builds `MacroKai.exe` on a Windows
 runner. To cut a release:
 
 ```
@@ -54,10 +68,10 @@ instead of a release).
 
 ```
 pip install -r requirements.txt pyinstaller
-pyinstaller --onefile --noconsole --name MacroTool macro_tool.py
+pyinstaller --onefile --noconsole --name MacroKai macro_tool.py
 ```
 
-The exe will be in `dist\MacroTool.exe`.
+The exe will be in `dist\MacroKai.exe`.
 
 ## Platform notes
 
