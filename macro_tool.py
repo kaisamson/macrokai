@@ -113,7 +113,14 @@ if IS_WINDOWS:
     def _send_mouse_input(flags, dx=0, dy=0, data=0):
         mi = MOUSEINPUT(dx, dy, data, flags, 0, 0)
         inp = INPUT(type=INPUT_MOUSE, mi=mi)
-        ctypes.windll.user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(inp))
+        # SendInput returns the number of events it actually queued (0 on
+        # failure, e.g. transient UIPI/driver contention under system load).
+        # Retry a few times rather than silently dropping the click/move.
+        for attempt in range(3):
+            sent = ctypes.windll.user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(inp))
+            if sent == 1:
+                return
+            time.sleep(0.005)
 
     def win_move(x, y):
         gsm = ctypes.windll.user32.GetSystemMetrics
@@ -174,6 +181,22 @@ HOTKEYS = {
 }
 
 MOVE_THROTTLE = 0.02  # seconds between recorded mouse-move samples
+
+# Minimum real time a key/button is held down during playback. Recordings
+# (or a playback pass that's fallen behind and is catching up) can otherwise
+# reproduce a press+release faster than a laggy target app's input poll
+# interval, so the app never sees the key as "down" at all.
+MIN_HOLD_S = 0.05
+
+
+def _wait_min_hold(pressed_at, stop_event):
+    if pressed_at is None:
+        return
+    remaining = MIN_HOLD_S - (time.time() - pressed_at)
+    while remaining > 0 and not stop_event.is_set():
+        step = min(0.02, remaining)
+        time.sleep(step)
+        remaining -= step
 
 
 # --------------------------------------------------------------------------
@@ -316,6 +339,12 @@ class Player:
             while not self._stop_event.is_set():
                 last_t = 0.0
                 pass_start = time.time()
+                # Wall-clock time each key/button was pressed, keyed by
+                # identifier, so releases can be delayed to guarantee a
+                # minimum hold — a press+release recorded (or replayed) faster
+                # than a laggy target app's input poll interval can otherwise
+                # cancel out before the app ever registers it.
+                down_times = {}
                 for ev in events:
                     if self._stop_event.is_set():
                         break
@@ -346,13 +375,22 @@ class Player:
                             # fullscreen games/apps drop clicks that land
                             # before the move is processed.
                             time.sleep(0.01)
-                            click_mouse(mouse_ctl, ev["button"], ev["pressed"])
+                            ident = ("click", ev["button"])
+                            if ev["pressed"]:
+                                down_times[ident] = time.time()
+                                click_mouse(mouse_ctl, ev["button"], True)
+                            else:
+                                _wait_min_hold(down_times.pop(ident, None), self._stop_event)
+                                click_mouse(mouse_ctl, ev["button"], False)
                         elif ev["type"] == "scroll":
                             move_mouse(mouse_ctl, ev["x"], ev["y"])
                             scroll_mouse(mouse_ctl, ev["dx"], ev["dy"])
                         elif ev["type"] == "kdown":
+                            down_times[("key", ev["k"])] = time.time()
                             kb_ctl.press(token_to_key(ev["k"]))
                         elif ev["type"] == "kup":
+                            ident = ("key", ev["k"])
+                            _wait_min_hold(down_times.pop(ident, None), self._stop_event)
                             kb_ctl.release(token_to_key(ev["k"]))
                     except Exception:
                         pass  # keep playback resilient to odd events
